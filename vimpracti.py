@@ -4,23 +4,100 @@ import signal
 import sys, tty, termios
 
 
+SHORTCUT_ESC = '\x1b'
 QUESTION_VAULT = [
     {
-        'k': 'Move cursor one character top',
-        'j': 'Move cursor one character down',
-        'l': 'Move cursor one character right',
+        ## navigation
         'h': 'Move cursor one character left',
-        'w': 'Move one word',
-        'e': 'Move to the end of the word',
-        'b': 'Move backwards one word',
-        'W': 'Move one word (space separated)',
-        'E': 'Move to the end of the word (no punctuation)',
-        'B': 'Move backwards one word (no punctuation)',
-        '0': 'Move to the beginning of a line',
-        '^': 'Move to first non-blank character in a line',
-        '$': 'Move to the end of a line',
-        'gg': 'Move to the top of a file',
-        'G': 'Move to the end of a file',
+        'j': 'Move cursor one character down',
+        'k': 'Move cursor one character up',
+        'l': 'Move cursor one character right',
+        'w': 'Jump by start of words (punctuation considered words)',
+        'W': 'Jump by words (spaces separate words)',
+        'e': 'jump to end of words (punctuation considered words)',
+        'E': 'jump to end of words (no punctuation)',
+        'b': 'jump backward by words (punctuation considered words)',
+        'B': 'jump backward by words (no punctuation)',
+        '0': 'start of line',
+        '^': 'first non-blank character of line',
+        '$': 'end of line',
+        'G': 'Go To command (prefix with number)',
+        'i': 'start insert mode at cursor',
+        'I': 'insert at the beginning of the line',
+        'a': 'append after the cursor',
+        'A': 'append at the end of the line',
+        'o': 'open (append) blank line below current line (no need to press return)',
+        'O': 'open blank line above current line',
+        'ea': 'append at end of word',
+        'Esc': 'exit insert mode',
+    },
+    {
+        ## editing
+        'r': 'replace a single character (does not use insert mode)',
+        'J': 'join line below to the current one',
+        'cc': 'change (replace) an entire line',
+        'cw': 'change (replace) to the end of word',
+        'c$': 'change (replace) to the end of line',
+        's': 'delete character at cursor and subsitute text',
+        'S': 'delete line at cursor and substitute text (same as cc)',
+        'xp': 'transpose two letters (delete and paste, technically)',
+        'u': 'undo',
+        '.': 'repeat last command',
+    },
+    {
+        ## marking text (in visual mode)
+         'v': 'start visual mode, mark lines, then do command (such as y-yank)',
+         'V': 'start Linewise visual mode',
+         'o': 'move to other end of marked area',
+         'O': 'move to Other corner of',
+         'aw': 'mark a word',
+         'ab': 'mark a () block (with braces)',
+         'aB': 'mark a {} block (with brackets)',
+         'ib': 'mark inner () block',
+         'iB': 'mark inner {} block',
+         'Esc': 'exit visual mode',
+    },
+    {
+        ## visual commands
+        '>': 'shift right',
+        '<': 'shift left',
+        'y': 'yank (copy) marked text',
+        'd': 'delete marked text',
+        '~': 'switch case',
+    },
+    {
+        ## cut and paste
+        'yy': 'yank (copy) a line',
+        '2yy': 'yank 2 lines',
+        'yw': 'yank word',
+        'y$': 'yank to end of line',
+        'p': 'put (paste) the clipboard after cursor',
+        'P': 'put (paste) before cursor',
+        'dd': 'delete (cut) a line',
+        'dw': 'delete (cut) the current word',
+        'x': 'delete (cut) current character',
+    },
+    {
+        ## exiting
+        ':w': 'write (save) the file, but don\'t exit',
+        ':wq': 'write (save) and quit',
+        ':q': 'quit (fails if anything has changed)',
+        ':q!': 'quit and throw away changes',
+    },
+    {
+        # search/replace
+        '/': 'search for pattern',
+        '?': 'search backward for pattern',
+        'n': 'repeat search in same direction',
+        'N': 'repeat search in opposite direction',
+    },
+    {
+        # working with multiple files
+        ':e filename': 'Edit a file in a new buffer',
+        ':bn': 'go to next buffer',
+        ':bp': 'go to previous buffer',
+        ':bd': 'delete a buffer (close a file)',
+        ':sp': 'Open a file in a new buffer and split window'
     },
 ]
 
@@ -58,4 +135,7 @@ class GetchUnix:
 getch = GetchUnix()
 x = getch(1)
 if x:
-    print('You pressed {}'.format(x))
+    if x == SHORTCUT_ESC:
+        print('you pressed ESC')
+    else:
+        print('You pressed {}'.format(x))
