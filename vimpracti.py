@@ -2,6 +2,7 @@
 
 import signal
 import sys, tty, termios
+import random
 
 
 SHORTCUT_ESC = '\x1b'
@@ -21,7 +22,8 @@ QUESTION_VAULT = [
         '0': 'start of line',
         '^': 'first non-blank character of line',
         '$': 'end of line',
-        'G': 'Go To command (prefix with number)',
+        'G': 'go to line (prefix with number)',
+        'G': 'go to last line of a file',
         'i': 'start insert mode at cursor',
         'I': 'insert at the beginning of the line',
         'a': 'append after the cursor',
@@ -29,7 +31,7 @@ QUESTION_VAULT = [
         'o': 'open (append) blank line below current line (no need to press return)',
         'O': 'open blank line above current line',
         'ea': 'append at end of word',
-        'Esc': 'exit insert mode',
+        'ESC': 'exit insert mode',
     },
     {
         ## editing
@@ -38,7 +40,8 @@ QUESTION_VAULT = [
         'cc': 'change (replace) an entire line',
         'cw': 'change (replace) to the end of word',
         'c$': 'change (replace) to the end of line',
-        's': 'delete character at cursor and subsitute text',
+        'ce': 'change (replace) to the end of the word',
+        's': 'delete character at cursor and substitute text',
         'S': 'delete line at cursor and substitute text (same as cc)',
         'xp': 'transpose two letters (delete and paste, technically)',
         'u': 'undo',
@@ -46,15 +49,10 @@ QUESTION_VAULT = [
     },
     {
         ## marking text (in visual mode)
-         'v': 'start visual mode, mark lines, then do command (such as y-yank)',
+         'v': 'start visual mode',
          'V': 'start Linewise visual mode',
          'o': 'move to other end of marked area',
-         'O': 'move to Other corner of',
-         'aw': 'mark a word',
-         'ab': 'mark a () block (with braces)',
-         'aB': 'mark a {} block (with brackets)',
-         'ib': 'mark inner () block',
-         'iB': 'mark inner {} block',
+         'O': 'move to other corner of marked area',
          'Esc': 'exit visual mode',
     },
     {
@@ -93,7 +91,7 @@ QUESTION_VAULT = [
     },
     {
         # working with multiple files
-        ':e filename': 'Edit a file in a new buffer',
+        ':e': 'Edit a file in a new buffer',
         ':bn': 'go to next buffer',
         ':bp': 'go to previous buffer',
         ':bd': 'delete a buffer (close a file)',
@@ -129,13 +127,40 @@ class GetchUnix:
         return char
 
     def alarm_handler(self, signum, frame):
+        print signum, frame
         raise AlarmException
 
 
-getch = GetchUnix()
-x = getch(1)
-if x:
-    if x == SHORTCUT_ESC:
-        print('you pressed ESC')
-    else:
-        print('You pressed {}'.format(x))
+def run(level=1):
+    getch = GetchUnix()
+    questions = {}
+    correct_answers = 0
+
+    for index, question_set in enumerate(QUESTION_VAULT):
+        questions.update(QUESTION_VAULT[index])
+        if index == level - 1:
+            break
+
+    questions_keys=questions.keys()
+    random.shuffle(questions_keys)
+
+    for key in questions_keys:
+        print(questions[key])
+        chars_num = len(key)
+        char = getch(chars_num)
+
+        if char == SHORTCUT_ESC and key == 'ESC':
+            correct_answers += 1
+            print('OK (ESC)')
+        elif char == key:
+            correct_answers += 1
+            print('OK ({})'.format(key))
+        else:
+            print('Invalid ({})'.format(key))
+
+    return correct_answers, len(questions_keys)
+
+
+if __name__ == '__main__':
+    correct, total = run(2)
+    print('You scored {}/{}.'.format(correct, total))
